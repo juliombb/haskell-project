@@ -1,5 +1,8 @@
 {-# LANGUAGE Strict #-}
 module Main where
+-- Projeto 1 - MC346 Paradigmas de programação - 2S2019
+-- Júlio Moreira Blas de Barros | RA 200491
+-- Gabriel da Silva Costa       | RA 216158
 
 import qualified Data.Map.Strict as StrictMap
 import Data.List
