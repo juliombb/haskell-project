@@ -1,5 +1,8 @@
 {-# LANGUAGE Strict #-}
 module Main where
+-- Projeto 1 - MC346 Paradigmas de programação - 2S2019
+-- Júlio Moreira Blas de Barros | RA 200491
+-- Gabriel da Silva Costa       | RA 216158
 
 import qualified Data.Map.Strict as StrictMap
 import Data.List
@@ -61,10 +64,10 @@ enrich aMap points =
     let (label, point) = (getNearestPointAndLabel aMap points) in
         enrich (attachLabel aMap label point) (delete point points)
 
-getLineLabelTuple :: [Char] -> ([Char], [[Char]])
+getLineLabelTuple :: [Char] -> ([Char], [Char])
 getLineLabelTuple line =
     let tokens = (splitStr line ' ')
-        headTail (h:t) = (h,t)
+        headTail (h:t) = (h, head t)
     in headTail tokens
 
 findPointWithLabel label (p:ps) = if label == (getLabel p) then p
@@ -86,12 +89,13 @@ getLabelMapFromInput aMap points = do
             $ enrich aMap points
     else do
         line <- getLine
-        let (label, labelPts) = (getLineLabelTuple line) in
+        if line == "" then (getLabelMapFromInput aMap points)
+        else let (pointName, label) = (getLineLabelTuple line) in
             getLabelMapFromInput (
                 foldl (\aMap -> \pt ->
                     attachLabel aMap label pt
-                ) aMap (filter (\pt -> (getLabel pt) `elem` labelPts) points)
-            ) (filter (\pt -> (getLabel pt) `notElem` labelPts) points)
+                ) aMap (filter (\pt -> (getLabel pt) == pointName) points)
+            ) (filter (\pt -> (getLabel pt) /= pointName) points)
 
 getPointsFromInput :: [Point] -> IO ()
 getPointsFromInput points = do
