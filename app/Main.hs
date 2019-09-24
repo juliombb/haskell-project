@@ -1,7 +1,6 @@
 {-# LANGUAGE Strict #-}
 module Main where
 
--- :set -package containers
 import qualified Data.Map.Strict as StrictMap
 import Data.List
 import System.IO (isEOF)
@@ -28,16 +27,16 @@ createPointFromLine line = Point (head tokens) (map read $ tail tokens)
     where tokens = splitStr line ' '
 
 attachLabel :: Map [Char] [Point] -> [Char] -> Point -> Map [Char] [Point]
-attachLabel mapa label point
-    | StrictMap.member label mapa = StrictMap.adjust (\v -> point:v) label mapa
-    | otherwise = StrictMap.insert label [point] mapa
+attachLabel aMap label point
+    | StrictMap.member label aMap = StrictMap.adjust (\v -> point:v) label aMap
+    | otherwise = StrictMap.insert label [point] aMap
 
 
 getDist :: ([Char], [Point], Double, Point) -> Double
 getDist (_, _, d, _) = d
 
 simplify :: ([Char], [Point], Double, Point) -> ([Char], Point)
-simplify (lbl, _, _, p) = (lbl, p)
+simplify (label, _, _, p) = (label, p)
 
 minimumDistance :: [Point] -> Point -> Double
 minimumDistance [] _ = 0
@@ -46,30 +45,29 @@ minimumDistance points p = dist (minimumBy (\p1 -> \p2 -> compare (dist p p1) (d
 minimumTuple :: [([Char], [Point])] -> Point -> ([Char], [Point], Double)
 minimumTuple pointTuples p =
     minimumBy (\(_, _, d1) -> \(_, _, d2) -> compare d1 d2) pointTupleDistances
-    where pointTupleDistances = map (\(lbl, ps1) -> (lbl, ps1, (minimumDistance ps1 p))) pointTuples
+    where pointTupleDistances = map (\(label, ps1) -> (label, ps1, (minimumDistance ps1 p))) pointTuples
 
 getNearestLabel :: Map [Char] [Point] -> Point -> ([Char], [Point], Double)
-getNearestLabel mapa p = minimumTuple (StrictMap.assocs mapa) p
+getNearestLabel aMap p = minimumTuple (StrictMap.assocs aMap) p
 
 getNearestPointAndLabel :: Map [Char] [Point] -> [Point] -> ([Char], Point)
-getNearestPointAndLabel mapa ps =
+getNearestPointAndLabel aMap ps =
     simplify $ minimumBy (\p1 -> \p2 -> compare (getDist p1) (getDist p2)) distances
-    where distances = map (\((a,b,c),d) -> (a,b,c,d)) $ map (\p -> ((getNearestLabel mapa p),p)) ps
+    where distances = map (\((a,b,c),d) -> (a,b,c,d)) $ map (\p -> ((getNearestLabel aMap p),p)) ps
 
 enrich :: Map [Char] [Point] -> [Point] -> Map [Char] [Point]
-enrich mapa [] = mapa
-enrich mapa pontos =
-    let (lbl, ponto) = (getNearestPointAndLabel mapa pontos) in
-        enrich (attachLabel mapa lbl ponto) (delete ponto pontos)
+enrich aMap [] = aMap
+enrich aMap points =
+    let (label, point) = (getNearestPointAndLabel aMap points) in
+        enrich (attachLabel aMap label point) (delete point points)
 
 getLineLabelTuple :: [Char] -> ([Char], [[Char]])
-getLineLabelTuple linha =
-    let tokens = (splitStr linha ' ')
+getLineLabelTuple line =
+    let tokens = (splitStr line ' ')
         headTail (h:t) = (h,t)
+    in headTail tokens
 
-        in headTail tokens
-
-findPointWithLabel lbl (p:ps) = if lbl == (getLabel p) then p else findPointWithLabel lbl ps
+findPointWithLabel label (p:ps) = if label == (getLabel p) then p else findPointWithLabel label ps
 
 printElements :: [[Char]] -> IO()
 printElements [] = return ()
@@ -77,35 +75,32 @@ printElements (x:xs) = do putStrLn x
                           printElements xs
 
 getLabelMapFromInput :: Map [Char] [Point] -> [Point] -> IO ()
-getLabelMapFromInput mapa pontos = do
+getLabelMapFromInput aMap points = do
     end <- isEOF
     if end then
         printElements 
             $ map (\t -> (show t)++"\n")
-            $ map (\(lbl, pts) -> (lbl, (map getLabel pts)))
+            $ map (\(label, pts) -> (label, (map getLabel pts)))
             $ StrictMap.assocs
-            $ enrich mapa pontos
+            $ enrich aMap points
     else do
-        linha <- getLine
-        let (lbl, lblPts) = (getLineLabelTuple linha) in
+        line <- getLine
+        let (label, labelPts) = (getLineLabelTuple line) in
             getLabelMapFromInput (
-                foldl (\mapa -> \pt ->
-                    attachLabel mapa lbl pt
-                ) mapa (filter (\pt -> (getLabel pt) `elem` lblPts) pontos)
-            ) (filter (\pt -> (getLabel pt) `notElem` lblPts) pontos)
+                foldl (\aMap -> \pt ->
+                    attachLabel aMap label pt
+                ) aMap (filter (\pt -> (getLabel pt) `elem` labelPts) points)
+            ) (filter (\pt -> (getLabel pt) `notElem` labelPts) points)
 
 getPointsFromInput :: [Point] -> IO ()
-getPointsFromInput pontos = do
+getPointsFromInput points = do
     end <- isEOF
     if end then
-        print pontos
+        print points
     else do
-        linha <- getLine
-        if linha == "" then getLabelMapFromInput StrictMap.empty pontos
-        else getPointsFromInput ((createPointFromLine linha):pontos)
+        line <- getLine
+        if line == "" then getLabelMapFromInput StrictMap.empty points
+        else getPointsFromInput ((createPointFromLine line):points)
 
 main :: IO ()
---main = print (dist (Point 3.0 4.0) (Point 4.0 3.0))
---main = print $ splitStr "meu amigo feliz" ' '
---main = print $ dist (Point [3, 4, 5]) (Point [4, 3, 12])
 main = getPointsFromInput []
