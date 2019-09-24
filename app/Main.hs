@@ -8,9 +8,9 @@ type Map = StrictMap.Map
 
 sq a = a * a
 
-data Point = Point [Double]
+data Point = Point [Char] [Double]
 
-dist (Point p1) (Point p2) = sqrt (sum $ map (\(a, b) -> sq (a - b)) $ zip p1 p2)
+dist (Point _ p1) (Point _ p2) = sqrt (sum $ map (\(a, b) -> sq (a - b)) $ zip p1 p2)
 
 splitStr list delimiter = splitStr' [] [] list delimiter
     where splitStr' :: Eq a => [[a]] -> [a] -> [a] -> a -> [[a]]
@@ -21,12 +21,14 @@ splitStr list delimiter = splitStr' [] [] list delimiter
             | x == delimiter = splitStr' finalAcc [] xs delimiter
             | otherwise = splitStr' finalAcc (acc++[x]) xs delimiter
 
-createTupleFromLine :: [Char] -> ([Char], Point)
-createTupleFromLine line = (head tokens, Point (map read $ tail tokens))
+createPointFromLine :: [Char] -> Point
+createPointFromLine line = Point (head tokens) (map read $ tail tokens)
     where tokens = splitStr line ' '
 
---attachLabel :: [Char] -> [Char] -> Map [Char] [([Char], Point)] -> Map [Char] [([Char], Point)]
---attachLabel point label Map.empty = StrictMap
+attachLabel :: Point -> [Char] -> Map [Char] [Point] -> Map [Char] [Point]
+attachLabel point label mapa
+    | StrictMap.member label mapa = StrictMap.adjust (\v -> point:v) label mapa
+    | otherwise = StrictMap.insert label [point] mapa
 
 main :: IO ()
 --main = print (dist (Point 3.0 4.0) (Point 4.0 3.0))
