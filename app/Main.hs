@@ -67,7 +67,8 @@ getLineLabelTuple line =
         headTail (h:t) = (h,t)
     in headTail tokens
 
-findPointWithLabel label (p:ps) = if label == (getLabel p) then p else findPointWithLabel label ps
+findPointWithLabel label (p:ps) = if label == (getLabel p) then p
+                                    else findPointWithLabel label ps
 
 printElements :: [[Char]] -> IO()
 printElements [] = return ()
@@ -99,8 +100,10 @@ getPointsFromInput points = do
         print points
     else do
         line <- getLine
-        if line == "" then getLabelMapFromInput StrictMap.empty points
-        else getPointsFromInput ((createPointFromLine line):points)
+        if line == "" then
+            getLabelMapFromInput StrictMap.empty points
+        else
+            getPointsFromInput ((createPointFromLine line):points)
 
 main :: IO ()
 main = getPointsFromInput []
